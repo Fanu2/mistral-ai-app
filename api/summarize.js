@@ -1,5 +1,5 @@
-export default async function handler(req: any, res: any) {
-  const text = req.body?.text;
+export default async function handler(req, res) {
+  const text = req.body && req.body.text;
 
   if (!text) {
     return res.status(400).json({ error: 'Missing text to summarize' });
@@ -19,9 +19,10 @@ export default async function handler(req: any, res: any) {
     });
 
     const data = await response.json();
-    const summary = data.choices?.[0]?.message?.content;
+    const summary = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
     res.status(200).json({ summary });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Failed to summarize text' });
   }
 }
