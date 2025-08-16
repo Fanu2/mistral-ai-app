@@ -1,41 +1,27 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+export default async function handler(req: any, res: any) {
+  const prompt = req.body?.prompt;
 
-// This function receives a POST request with { message, persona } in the body
-// and forwards it to the Mistral API using your environment variables.
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (!prompt) {
+    return res.status(400).json({ error: 'Missing prompt' });
   }
-
-  const { message, persona } = req.body;
-
-  if (!message) {
-    return res.status(400).json({ error: 'Message missing' });
-  }
-
-  const apiKey = process.env.MISTRAL_API_KEY;
-  const endpoint = process.env.MISTRAL_ENDPOINT; // e.g. https://api.mistral.ai/v1/chat/completions
 
   try {
-    const response = await fetch(endpoint as string, {
+    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
+        Authorization: `Bearer ${process.env.MISTRAL_API_KEY}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "mistral", // adjust depending on the actual model name
-        messages: [
-          { role: "system", content: persona || "You are a helpful assistant." },
-          { role: "user", content: message }
-        ]
-      })
+        model: 'mistral-medium',
+        messages: [{ role: 'user', content: prompt }],
+      }),
     });
 
     const data = await response.json();
-    return res.status(200).json(data);
-  } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'API Error' });
+    const result = data.choices?.[0]?.message?.content;
+    res.status(200).json({ result });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to call Mistral API' });
   }
 }
-
