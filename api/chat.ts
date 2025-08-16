@@ -3,7 +3,7 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { message, persona } = req.body;
+  const { text } = req.body;
 
   try {
     const response = await fetch(process.env.MISTRAL_ENDPOINT as string, {
@@ -15,8 +15,8 @@ export default async function handler(req: any, res: any) {
       body: JSON.stringify({
         model: "mistral",
         messages: [
-          { role: "system", content: persona || "You are a helpful assistant." },
-          { role: "user", content: message }
+          { role: "system", content: "Summarize this text." },
+          { role: "user", content: text }
         ]
       })
     });
@@ -24,6 +24,6 @@ export default async function handler(req: any, res: any) {
     const data = await response.json();
     res.status(200).json(data);
   } catch (error: any) {
-    res.status(500).json({ error: 'Error calling API' });
+    res.status(500).json({ error: 'API error' });
   }
 }
