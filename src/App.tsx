@@ -5,18 +5,22 @@ import Summarizer from './pages/Summarizer';
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <div className="p-4 font-sans">
         <nav className="flex gap-4 mb-6">
-          <NavLink to="/" end className="text-blue-600">Chat</NavLink>
-          <NavLink to="/summarizer" className="text-blue-600">Summarizer</NavLink>
+          <NavLink to="/" end className="text-blue-600">
+            Chat
+          </NavLink>
+          <NavLink to="/summarizer" className="text-blue-600">
+            Summarizer
+          </NavLink>
         </nav>
         <Routes>
           <Route path="/" element={<Chat />} />
           <Route path="/summarizer" element={<Summarizer />} />
         </Routes>
       </div>
-    </BrowserRouter>
+    </HashRouter>
   );
 };
 
