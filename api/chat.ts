@@ -1,27 +1,29 @@
 export default async function handler(req: any, res: any) {
-  const prompt = req.body?.prompt;
-
-  if (!prompt) {
-    return res.status(400).json({ error: 'Missing prompt' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const { message, persona } = req.body;
+
   try {
-    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+    const response = await fetch(process.env.MISTRAL_ENDPOINT as string, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.MISTRAL_API_KEY}`,
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'mistral-medium',
-        messages: [{ role: 'user', content: prompt }],
-      }),
+        model: "mistral",
+        messages: [
+          { role: "system", content: persona || "You are a helpful assistant." },
+          { role: "user", content: message }
+        ]
+      })
     });
 
     const data = await response.json();
-    const result = data.choices?.[0]?.message?.content;
-    res.status(200).json({ result });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to call Mistral API' });
+    res.status(200).json(data);
+  } catch (error: any) {
+    res.status(500).json({ error: 'Error calling API' });
   }
 }
