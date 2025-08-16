@@ -1,37 +1,27 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+export default async function handler(req: any, res: any) {
+  const text = req.body?.text;
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const { text } = req.body;
   if (!text) {
-    return res.status(400).json({ error: 'Text missing' });
+    return res.status(400).json({ error: 'Missing text to summarize' });
   }
-
-  const apiKey = process.env.MISTRAL_API_KEY;
-  const endpoint = process.env.MISTRAL_ENDPOINT;
 
   try {
-    const response = await fetch(endpoint as string, {
+    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
+        Authorization: `Bearer ${process.env.MISTRAL_API_KEY}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "mistral",
-        messages: [
-          { role: "system", content: "Summarize the text provided by the user." },
-          { role: "user", content: text }
-        ]
-      })
+        model: 'mistral-medium',
+        messages: [{ role: 'user', content: `Summarize this: ${text}` }],
+      }),
     });
 
     const data = await response.json();
-    return res.status(200).json(data);
-  } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'API Error' });
+    const summary = data.choices?.[0]?.message?.content;
+    res.status(200).json({ summary });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to summarize text' });
   }
 }
