@@ -1,4 +1,3 @@
-// Enable automatic body parsing on Vercel
 export const config = {
   api: { bodyParser: true }
 };
@@ -14,18 +13,19 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing message' });
   }
 
-  try {
-    const endpoint = process.env.MISTRAL_ENDPOINT;
-    const apiKey = process.env.MISTRAL_API_KEY;
+  const endpoint = process.env.MISTRAL_ENDPOINT;
+  const apiKey = process.env.MISTRAL_API_KEY;
+  console.log("Endpoint:", endpoint, "Key present:", !!apiKey);
 
+  try {
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        Authorization: `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'mistral',
+        model: "mistral-medium",   // <<< IMPORTANT fix here
         messages: [
           { role: 'system', content: persona || 'You are a helpful assistant.' },
           { role: 'user', content: message }
@@ -33,10 +33,12 @@ export default async function handler(req, res) {
       })
     });
 
+    console.log("Status from Mistral:", response.status);
+
     if (!response.ok) {
       const errText = await response.text();
-      console.error('Mistral API error:', errText);
-      return res.status(500).json({ error: 'Failed to fetch from Mistral' });
+      console.error("Mistral Error:", errText);
+      return res.status(500).json({ error: "Mistral API error" });
     }
 
     const data = await response.json();
