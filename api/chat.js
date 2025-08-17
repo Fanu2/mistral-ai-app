@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   }
 
   // Use your actual model here. Example: 'mistral-medium' or 'mistral-small'
-  const model = process.env.MISTRAL_MODEL || 'mistral-medium';
+  const model = process.env.MISTRAL_MODEL || 'mistral-7b';
 
   // Construct prompt:
   const prompt = persona ? `${persona}\n${message}` : message;
