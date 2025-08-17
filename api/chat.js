@@ -12,14 +12,12 @@ export default async function handler(req, res) {
 
   const endpoint = 'https://api.mistral.ai/v1/chat/completions';
   const apiKey = process.env.MISTRAL_API_KEY;
+  const model = process.env.MISTRAL_MODEL || 'mistral-medium';
+
   if (!apiKey) {
     return res.status(500).json({ error: 'Mistral API key missing.' });
   }
 
-  // Use your actual model here. Example: 'mistral-medium' or 'mistral-small'
-  const model = process.env.MISTRAL_MODEL || 'MODEL_NAME=mistralai/Mistral-7B-v0.1';
-
-  // Construct prompt:
   const prompt = persona ? `${persona}\n${message}` : message;
 
   try {
@@ -38,23 +36,29 @@ export default async function handler(req, res) {
 
     if (!apiRes.ok) {
       const textErr = await apiRes.text();
-      console.error('Mistral API error:', textErr);
-      throw new Error('Mistral did not respond OK');
+      console.error('Mistral API error:', apiRes.status, textErr);
+      return res.status(502).json({
+        error: 'Mistral API failed',
+        fallback: true,
+        message: `🤖 Sorry, I couldn't reach Mistral. Here's a mock reply: "${message}" sounds interesting! Tell me more.`
+      });
     }
 
     const data = await apiRes.json();
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    const content = data.choices?.[0]?.message?.content?.trim();
+
+    if (!content) {
       throw new Error('Invalid response format from Mistral');
     }
 
-    const content = data.choices[0].message.content.trim();
     return res.status(200).json({ message: content });
 
   } catch (err) {
     console.error('Server error:', err);
-    return res.status(200).json({
-      message: `🤖 Sorry, I couldn't reach Mistral. Here's a mock reply: "${message}" sounds interesting! Tell me more.`,
-      fallback: true
+    return res.status(502).json({
+      error: 'Server error',
+      fallback: true,
+      message: `🤖 Sorry, I couldn't reach Mistral. Here's a mock reply: "${message}" sounds interesting! Tell me more.`
     });
   }
 }
